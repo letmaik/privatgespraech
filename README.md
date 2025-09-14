@@ -1,6 +1,6 @@
 # Privatgespräch
 
-https://letmaik.github.io/privatgespräch/
+https://letmaik.github.io/privatgespraech/
 
 A privacy-focused AI chat interface that runs language models entirely in your browser using WebGPU acceleration. Designed for desktop and laptop computers.
 
