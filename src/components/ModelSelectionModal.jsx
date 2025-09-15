@@ -25,7 +25,7 @@ export default function ModelSelectionModal({ onModelSelect, onClose }) {
           {AVAILABLE_MODELS.map((model) => (
             <label
               key={model.id}
-              className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${
+              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${
                 selectedModel === model.url
                   ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
                   : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
@@ -37,7 +37,7 @@ export default function ModelSelectionModal({ onModelSelect, onClose }) {
                 value={model.url}
                 checked={selectedModel === model.url}
                 onChange={(e) => setSelectedModel(e.target.value)}
-                className="mt-1 text-blue-600 focus:ring-blue-500"
+                className="text-blue-600 focus:ring-blue-500"
               />
               <div className="flex-1">
                 <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -51,12 +51,16 @@ export default function ModelSelectionModal({ onModelSelect, onClose }) {
           ))}
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-center">
           <button
             onClick={handleLoad}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg transition-colors"
+            className="group relative px-6 py-3 text-white font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex items-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
             Load Model
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
           </button>
         </div>
       </div>
