@@ -396,6 +396,11 @@ function App() {
           value={input}
           disabled={status === "loading" || isRunning}
           title={status === "ready" ? "Model is ready" : status === "loading" ? "Loading model..." : "Send a message to load the model"}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          data-form-type="other"
           onKeyDown={(e) => {
             if (
               input.length > 0 &&
