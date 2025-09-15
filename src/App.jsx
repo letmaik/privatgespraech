@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import Chat from "./components/Chat";
 import SendIcon from "./components/icons/SendIcon";
 import StopIcon from "./components/icons/StopIcon";
+import GitHubIcon from "./components/icons/GitHubIcon";
 import ModelSelector from "./components/ModelSelector";
 import LoadingModal from "./components/LoadingModal";
 import ModelSelectionModal from "./components/ModelSelectionModal";
@@ -302,6 +303,19 @@ function App() {
           onModelChange={handleModelChange}
           disabled={status === "loading" || isRunning}
         />
+      </div>
+      
+      {/* GitHub link - top right */}
+      <div className="absolute top-4 right-4 z-10">
+        <a
+          href="https://github.com/letmaik/privatgespraech"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center w-10 h-10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors"
+          title="View on GitHub"
+        >
+          <GitHubIcon className="w-5 h-5" />
+        </a>
       </div>
       
       {/* Model Selection Modal for first-time users */}
