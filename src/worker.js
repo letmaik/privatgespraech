@@ -35,10 +35,6 @@ class TextGenerationPipeline {
       "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX": {
         dtype: "q4f16",
         device: "webgpu",
-      },
-      "onnx-community/gemma-3-1b-it-ONNX": {
-        dtype: "q4f16",
-        device: "webgpu",
       }
     };
     

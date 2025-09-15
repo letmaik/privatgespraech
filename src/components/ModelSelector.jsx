@@ -35,13 +35,6 @@ const AVAILABLE_MODELS = [
     description: 'DeepSeek model, 1.3 GB',
     url: 'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',
     hasReasoningBlocks: true
-  },
-  {
-    id: 'gemma-3-1b',
-    name: 'Gemma 3 1B',
-    description: 'Google model, 1.0 GB',
-    url: 'onnx-community/gemma-3-1b-it-ONNX',
-    hasReasoningBlocks: false
   }
 ];
 
