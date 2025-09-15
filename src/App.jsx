@@ -5,6 +5,7 @@ import SendIcon from "./components/icons/SendIcon";
 import StopIcon from "./components/icons/StopIcon";
 import ModelSelector from "./components/ModelSelector";
 import LoadingModal from "./components/LoadingModal";
+import ModelSelectionModal from "./components/ModelSelectionModal";
 
 const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
 const STICKY_SCROLL_THRESHOLD = 120;
@@ -13,6 +14,26 @@ const EXAMPLES = [
   "Explain the difference between HTTP and HTTPS.",
   "Show a short Python example computing the factorial of a number.",
 ];
+
+// LocalStorage helpers
+const STORAGE_KEY = 'privatgespraech-selected-model';
+
+function getStoredModel() {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+    return null;
+  }
+}
+
+function setStoredModel(modelId) {
+  try {
+    localStorage.setItem(STORAGE_KEY, modelId);
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
+}
 
 function App() {
   // Create a reference to the worker object.
@@ -28,6 +49,8 @@ function App() {
   const [progressItems, setProgressItems] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedModel, setSelectedModel] = useState('onnx-community/Llama-3.2-1B-Instruct-q4f16');
+  const [showModelSelectionModal, setShowModelSelectionModal] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Inputs and outputs
   const [input, setInput] = useState("");
@@ -64,8 +87,21 @@ function App() {
     if (isRunning) return; // Prevent model switching during text generation
     
     setSelectedModel(modelId);
+    setStoredModel(modelId); // Save to localStorage
     setStatus("loading");
     // Don't clear messages - keep chat history
+    setProgressItems([]);
+    
+    worker.current.postMessage({ 
+      type: "load",
+      model_id: modelId
+    });
+  }
+
+  function handleInitialModelSelect(modelId) {
+    setSelectedModel(modelId);
+    setStoredModel(modelId); // Save to localStorage
+    setStatus("loading");
     setProgressItems([]);
     
     worker.current.postMessage({ 
@@ -196,6 +232,28 @@ function App() {
     };
   }, []);
 
+  // Initialize model selection on app start
+  useEffect(() => {
+    if (!hasInitialized && worker.current) {
+      const storedModel = getStoredModel();
+      
+      if (storedModel) {
+        // User has selected a model before, automatically load it
+        setSelectedModel(storedModel);
+        setStatus("loading");
+        worker.current.postMessage({ 
+          type: "load", 
+          model_id: storedModel 
+        });
+      } else {
+        // First-time user, show model selection modal
+        setShowModelSelectionModal(true);
+      }
+      
+      setHasInitialized(true);
+    }
+  }, [hasInitialized]);
+
   // Send the messages to the worker thread whenever the `messages` state changes.
   useEffect(() => {
     if (messages.filter((x) => x.role === "user").length === 0) {
@@ -245,6 +303,14 @@ function App() {
           disabled={status === "loading" || isRunning}
         />
       </div>
+      
+      {/* Model Selection Modal for first-time users */}
+      {showModelSelectionModal && (
+        <ModelSelectionModal 
+          onModelSelect={handleInitialModelSelect}
+          onClose={() => setShowModelSelectionModal(false)}
+        />
+      )}
       
       {/* Loading Modal */}
       {status === "loading" && (
