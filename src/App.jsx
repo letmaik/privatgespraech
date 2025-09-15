@@ -4,7 +4,7 @@ import Chat from "./components/Chat";
 import SendIcon from "./components/icons/SendIcon";
 import StopIcon from "./components/icons/StopIcon";
 import GitHubIcon from "./components/icons/GitHubIcon";
-import ModelSelector from "./components/ModelSelector";
+import ModelSelector, { AVAILABLE_MODELS } from "./components/ModelSelector";
 import LoadingModal from "./components/LoadingModal";
 import ModelSelectionModal from "./components/ModelSelectionModal";
 
@@ -21,7 +21,16 @@ const STORAGE_KEY = 'privatgespraech-selected-model';
 
 function getStoredModel() {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    
+    // Validate that the stored model still exists in available models
+    if (stored && !AVAILABLE_MODELS.find(model => model.url === stored)) {
+      console.warn(`Stored model ${stored} is no longer available, clearing from storage`);
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    
+    return stored;
   } catch (error) {
     console.warn('localStorage not available:', error);
     return null;
@@ -214,6 +223,28 @@ function App() {
         case "error":
           setError(e.data.data);
           setStatus(null);
+          setIsRunning(false);
+          break;
+
+        case "unsupported_model":
+          // Handle case where stored model is no longer supported
+          console.warn(`Unsupported model detected: ${e.data.model_id}`);
+          
+          // Clear the invalid model from localStorage
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch (error) {
+            console.warn('Could not clear localStorage:', error);
+          }
+          
+          // Reset states
+          setError(null);
+          setStatus(null);
+          setIsRunning(false);
+          setProgressItems([]);
+          
+          // Show model selection modal to let user choose a new model
+          setShowModelSelectionModal(true);
           break;
       }
     };

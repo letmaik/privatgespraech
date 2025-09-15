@@ -31,6 +31,14 @@ class TextGenerationPipeline {
       "onnx-community/Qwen3-0.6B-ONNX": {
         dtype: "q4f16",
         device: "webgpu",
+      },
+      "onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX": {
+        dtype: "q4f16",
+        device: "webgpu",
+      },
+      "onnx-community/gemma-3-1b-it-ONNX": {
+        dtype: "q4f16",
+        device: "webgpu",
       }
     };
     
@@ -146,27 +154,43 @@ async function check() {
 }
 
 async function load(model_id) {
-  self.postMessage({
-    status: "loading",
-    data: "Loading model...",
-  });
+  try {
+    self.postMessage({
+      status: "loading",
+      data: "Loading model...",
+    });
 
-  // Load the pipeline and save it for future use.
-  const [tokenizer, model] = await TextGenerationPipeline.getInstance(model_id, (x) => {
-    // We also add a progress callback to the pipeline so that we can
-    // track model loading.
-    self.postMessage(x);
-  });
+    // Load the pipeline and save it for future use.
+    const [tokenizer, model] = await TextGenerationPipeline.getInstance(model_id, (x) => {
+      // We also add a progress callback to the pipeline so that we can
+      // track model loading.
+      self.postMessage(x);
+    });
 
-  self.postMessage({
-    status: "loading",
-    data: "Compiling shaders and warming up model...",
-  });
+    self.postMessage({
+      status: "loading",
+      data: "Compiling shaders and warming up model...",
+    });
 
-  // Run model with dummy input to compile shaders
-  const inputs = tokenizer("a");
-  await model.generate({ ...inputs, max_new_tokens: 1 });
-  self.postMessage({ status: "ready" });
+    // Run model with dummy input to compile shaders
+    const inputs = tokenizer("a");
+    await model.generate({ ...inputs, max_new_tokens: 1 });
+    self.postMessage({ status: "ready" });
+  } catch (error) {
+    // Check if this is an unsupported model error
+    if (error.message && error.message.includes('Unsupported model:')) {
+      self.postMessage({
+        status: "unsupported_model",
+        data: error.toString(),
+        model_id: model_id
+      });
+    } else {
+      self.postMessage({
+        status: "error",
+        data: error.toString(),
+      });
+    }
+  }
 }
 // Listen for messages from the main thread
 self.addEventListener("message", async (e) => {
