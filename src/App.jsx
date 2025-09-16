@@ -5,8 +5,8 @@ import SendIcon from "./components/icons/SendIcon";
 import StopIcon from "./components/icons/StopIcon";
 import GitHubIcon from "./components/icons/GitHubIcon";
 import ModelSelector, { AVAILABLE_MODELS } from "./components/ModelSelector";
-import LoadingModal from "./components/LoadingModal";
 import ModelSelectionModal from "./components/ModelSelectionModal";
+import InlineProgress from "./components/InlineProgress";
 
 const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
 const STICKY_SCROLL_THRESHOLD = 120;
@@ -65,23 +65,33 @@ function App() {
   // Inputs and outputs
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [queuedMessage, setQueuedMessage] = useState(null); // For storing message when model is loading
   const [tps, setTps] = useState(null);
   const [numTokens, setNumTokens] = useState(null);
 
   function onEnter(message) {
+    // Prevent queueing multiple messages
+    if (status === "loading" && queuedMessage) {
+      return;
+    }
+    
+    // Always add the message to the chat immediately for visibility
     setMessages((prev) => [...prev, { role: "user", content: message }]);
     setTps(null);
     setInput("");
     
-    // Load model if not already loaded
     if (status !== "ready") {
-      setStatus("loading");
-      setIsRunning(false); // Don't set running yet, wait for model to load
-      worker.current.postMessage({ 
-        type: "load", 
-        model_id: selectedModel 
-      });
+      // Model not ready - queue the message and start loading if not already loading
+      setQueuedMessage(message);
+      if (status !== "loading") {
+        setStatus("loading");
+        worker.current.postMessage({ 
+          type: "load", 
+          model_id: selectedModel 
+        });
+      }
     } else {
+      // Model ready - start generation immediately
       setIsRunning(true);
     }
   }
@@ -94,14 +104,16 @@ function App() {
 
   function handleModelChange(modelId) {
     if (modelId === selectedModel) return;
-    if (isRunning) return; // Prevent model switching during text generation
+    if (isRunning || status === "loading") return; // Prevent model switching during text generation or loading
     
     setSelectedModel(modelId);
     setStoredModel(modelId); // Save to localStorage
     setStatus("loading");
-    // Don't clear messages - keep chat history
+    // Don't clear messages - keep chat history, but clear queued message since we're switching models
+    setQueuedMessage(null); // Clear any queued message when switching models
     setProgressItems([]);
     
+    // Start loading new model
     worker.current.postMessage({ 
       type: "load",
       model_id: modelId
@@ -178,9 +190,9 @@ function App() {
         case "ready":
           // Pipeline ready: the worker is ready to accept messages.
           setStatus("ready");
-          // If we have messages and were waiting for the model to load, start generation
-          // Only set running to true if we have user messages waiting to be processed
-          if (messages.length > 0 && messages[messages.length - 1].role === "user") {
+          // If we have a queued message, start generation
+          if (queuedMessage) {
+            setQueuedMessage(null);
             setIsRunning(true);
           }
           break;
@@ -325,6 +337,7 @@ function App() {
           onClick={() => {
             worker.current.postMessage({ type: "reset" });
             setMessages([]);
+            setQueuedMessage(null); // Clear queued message
           }}
         >
           New Chat
@@ -332,7 +345,7 @@ function App() {
         <ModelSelector 
           selectedModel={selectedModel}
           onModelChange={handleModelChange}
-          disabled={status === "loading" || isRunning}
+          disabled={isRunning || status === "loading"} // Disable during generation or loading
         />
       </div>
       
@@ -354,14 +367,6 @@ function App() {
         <ModelSelectionModal 
           onModelSelect={handleInitialModelSelect}
           onClose={() => setShowModelSelectionModal(false)}
-        />
-      )}
-      
-      {/* Loading Modal */}
-      {status === "loading" && (
-        <LoadingModal 
-          loadingMessage={loadingMessage}
-          progressItems={progressItems}
         />
       )}
       
@@ -417,15 +422,28 @@ function App() {
         </div>
       )}
 
+      {/* Inline Progress Display */}
+      <InlineProgress 
+        loadingMessage={loadingMessage}
+        progressItems={progressItems}
+        isVisible={status === "loading"}
+      />
+
       <div className="mt-2 border dark:bg-gray-700 rounded-lg w-[800px] max-w-[80%] max-h-[200px] mx-auto relative mb-3 flex">
         <textarea
           ref={textareaRef}
           className="scrollbar-thin w-full dark:bg-gray-700 px-3 py-4 rounded-lg bg-transparent border-none outline-none text-gray-800 disabled:text-gray-400 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 disabled:placeholder-gray-200 resize-none disabled:cursor-not-allowed"
-          placeholder="Type your message..."
+          placeholder={
+            status === "loading" && queuedMessage 
+              ? "Message queued, loading model..." 
+              : status === "loading" 
+                ? "Type your message (will be queued)..." 
+                : "Type your message..."
+          }
           type="text"
           rows={1}
           value={input}
-          disabled={status === "loading" || isRunning}
+          disabled={isRunning || (status === "loading" && queuedMessage)} // Disable when running or when a message is already queued
           title={status === "ready" ? "Model is ready" : status === "loading" ? "Loading model..." : "Send a message to load the model"}
           autoComplete="off"
           autoCorrect="off"
@@ -435,7 +453,8 @@ function App() {
           onKeyDown={(e) => {
             if (
               input.length > 0 &&
-              !isRunning &&
+              !isRunning && // Prevent during generation
+              !(status === "loading" && queuedMessage) && // Prevent when message already queued
               e.key === "Enter" &&
               !e.shiftKey
             ) {
@@ -449,7 +468,7 @@ function App() {
           <div className="cursor-pointer" onClick={onInterrupt}>
             <StopIcon className="h-8 w-8 p-1 rounded-md text-gray-800 dark:text-gray-100 absolute right-3 bottom-3" />
           </div>
-        ) : input.length > 0 ? (
+        ) : input.length > 0 && !(status === "loading" && queuedMessage) ? (
           <div className="cursor-pointer" onClick={() => onEnter(input)}>
             <SendIcon
               className={`h-8 w-8 p-1 bg-gray-800 dark:bg-gray-100 text-white dark:text-black rounded-md absolute right-3 bottom-3`}

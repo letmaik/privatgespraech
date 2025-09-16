@@ -175,6 +175,7 @@ async function load(model_id) {
     // Run model with dummy input to compile shaders
     const inputs = tokenizer("a");
     await model.generate({ ...inputs, max_new_tokens: 1 });
+    
     self.postMessage({ status: "ready" });
   } catch (error) {
     // Check if this is an unsupported model error

@@ -234,10 +234,7 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
         loading ? "opacity-50 pointer-events-none" : "opacity-100"
       } ${empty ? "flex flex-col items-center justify-end" : "space-y-4"}`}
     >
-      {empty ? (
-        <div className="text-xl">Ready!</div>
-      ) : (
-        messages.map((msg, i) => (
+      {messages.map((msg, i) => (
           <div key={`message-${i}`} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" ? (
               <div className="relative group w-full max-w-none">
@@ -278,8 +275,7 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
               </div>
             )}
           </div>
-        ))
-      )}
+        ))}
     </div>
   );
 }
