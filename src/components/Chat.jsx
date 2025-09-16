@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import CopyIcon from "./icons/CopyIcon";
+import PencilIcon from "./icons/PencilIcon";
 import ThinkBlock from "./ThinkBlock";
 import { AVAILABLE_MODELS } from "./ModelSelector";
 
@@ -196,9 +197,11 @@ function MarkdownWithSyntaxHighlighting({ content, isDark, isGenerating = false,
   );
 }
 
-export default function Chat({ messages, isRunning, loading = false, selectedModel }) {
+export default function Chat({ messages, isRunning, loading = false, selectedModel, onEditMessage }) {
   const empty = messages.length === 0;
   const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
+  const [editingMessageIndex, setEditingMessageIndex] = useState(null);
+  const [editingMessageText, setEditingMessageText] = useState("");
 
   // Detect if dark theme is active
   const isDark = useMemo(() => {
@@ -221,6 +224,25 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
     }
   };
 
+  // Edit message functions
+  const startEditing = (messageIndex, messageText) => {
+    setEditingMessageIndex(messageIndex);
+    setEditingMessageText(messageText);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageIndex(null);
+    setEditingMessageText("");
+  };
+
+  const submitEdit = () => {
+    if (editingMessageText.trim() && onEditMessage) {
+      onEditMessage(editingMessageIndex, editingMessageText.trim());
+      setEditingMessageIndex(null);
+      setEditingMessageText("");
+    }
+  };
+
   useEffect(() => {
     // Handle MathJax
     if (window.MathJax) {
@@ -235,7 +257,7 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
       } ${empty ? "flex flex-col items-center justify-end" : "space-y-4"}`}
     >
       {messages.map((msg, i) => (
-          <div key={`message-${i}`} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={`message-${i}`} className={`flex ${msg.role === "user" ? (editingMessageIndex === i ? "justify-start" : "justify-end") : "justify-start"}`}>
             {msg.role === "assistant" ? (
               <div className="relative group w-full max-w-none">
                 <div className="min-h-6 text-gray-800 dark:text-gray-200 overflow-wrap-anywhere w-full">
@@ -268,10 +290,62 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
                 )}
               </div>
             ) : (
-              <div className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-2xl px-4 py-2 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl">
-                <div className="min-h-6 break-words">
-                  {msg.content}
-                </div>
+              <div className={`relative group ${editingMessageIndex === i ? 'w-full' : ''}`}>
+                {editingMessageIndex === i ? (
+                  // Editing mode
+                  <div className="bg-gray-100 dark:bg-gray-600 rounded-2xl px-4 py-2 w-full">
+                    <textarea
+                      value={editingMessageText}
+                      onChange={(e) => setEditingMessageText(e.target.value)}
+                      className="w-full min-h-[60px] bg-transparent border-none outline-none text-gray-800 dark:text-gray-200 resize-none"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          submitEdit();
+                        } else if (e.key === 'Escape') {
+                          cancelEditing();
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={cancelEditing}
+                        className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-500 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-400 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={submitEdit}
+                        className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        disabled={!editingMessageText.trim()}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Normal display mode
+                  <div>
+                    <div className="bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-2xl px-4 py-2 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl">
+                      <div className="min-h-6 break-words">
+                        {msg.content}
+                      </div>
+                    </div>
+                    {!isRunning && (
+                      <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => startEditing(i, msg.content)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                          title="Edit message"
+                        >
+                          <PencilIcon className="h-3 w-3" />
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

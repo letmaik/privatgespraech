@@ -102,6 +102,27 @@ function App() {
     worker.current.postMessage({ type: "interrupt" });
   }
 
+  function onEditMessage(messageIndex, newContent) {
+    // Update the message content
+    const updatedMessages = [...messages];
+    updatedMessages[messageIndex] = { ...updatedMessages[messageIndex], content: newContent };
+    
+    // Remove all messages after the edited message
+    const messagesUpToEdit = updatedMessages.slice(0, messageIndex + 1);
+    
+    // Set the updated messages
+    setMessages(messagesUpToEdit);
+    
+    // Clear any states related to generation
+    setTps(null);
+    setNumTokens(null);
+    
+    // If the model is ready, start generation with the new message
+    if (status === "ready") {
+      setIsRunning(true);
+    }
+  }
+
   function handleModelChange(modelId) {
     if (modelId === selectedModel) return;
     if (isRunning || status === "loading") return; // Prevent model switching during text generation or loading
@@ -380,6 +401,7 @@ function App() {
             isRunning={isRunning} 
             loading={status === "loading"}
             selectedModel={selectedModel}
+            onEditMessage={onEditMessage}
           />
           {messages.length === 0 && (status === "ready" || status === null) && (
             <div>
