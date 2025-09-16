@@ -19,6 +19,10 @@ class TextGenerationPipeline {
         dtype: "q4f16",
         device: "webgpu",
       },
+      "onnx-community/Llama-3.2-3B-Instruct-onnx-web-gqa": {
+        dtype: "q4f16",
+        device: "webgpu",
+      },
       "onnx-community/Phi-3.5-mini-instruct-onnx-web": {
         dtype: "q4f16",
         device: "webgpu",

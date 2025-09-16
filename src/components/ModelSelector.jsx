@@ -9,6 +9,13 @@ const AVAILABLE_MODELS = [
     hasReasoningBlocks: false
   },
   {
+    id: 'llama-3.2-3b',
+    name: 'Llama 3.2 3B',
+    description: 'Meta model, 2.4 GB',
+    url: 'onnx-community/Llama-3.2-3B-Instruct-onnx-web-gqa',
+    hasReasoningBlocks: false
+  },
+  {
     id: 'phi-3.5-mini',
     name: 'Phi-3.5 Mini 3.8B',
     description: 'Microsoft model, 2.1 GB',
