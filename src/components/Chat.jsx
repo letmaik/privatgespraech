@@ -333,7 +333,15 @@ export default function Chat({ messages, isRunning, loading = false, selectedMod
                       </div>
                     </div>
                     {!isRunning && (
-                      <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => copyToClipboard(msg.content, i)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                          title="Copy to clipboard"
+                        >
+                          <CopyIcon className="h-3 w-3" />
+                          {copiedMessageIndex === i ? 'Copied!' : 'Copy'}
+                        </button>
                         <button
                           onClick={() => startEditing(i, msg.content)}
                           className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
