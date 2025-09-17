@@ -8,7 +8,48 @@ import ModelSelector, { AVAILABLE_MODELS } from "./components/ModelSelector";
 import ModelSelectionModal from "./components/ModelSelectionModal";
 import InlineProgress from "./components/InlineProgress";
 
-const IS_WEBGPU_AVAILABLE = !!navigator.gpu;
+// Enhanced WebGPU compatibility check
+async function isWebGPUok() {
+  if (!("gpu" in navigator)) {
+    return { isSupported: false, error: 'WebGPU is NOT supported on this browser.' };
+  }
+
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) {
+    return { isSupported: false, error: 'WebGPU Adapter not found.' };
+  }
+
+  const device = await adapter.requestDevice();
+  if (!device) {
+    return { isSupported: false, error: 'WebGPU Device not available.' };
+  }
+
+  if (!adapter.features.has('shader-f16')) {
+    return { isSupported: false, error: 'WebGPU "shader-f16" feature is NOT supported on this device.' };
+  }
+
+  // Minimal Compute Shader WGSL code for test
+  const shaderCode = `
+    @compute @workgroup_size(1)
+    fn main() {
+      // simple no-op compute shader
+    }
+  `;
+
+  try {
+    const shaderModule = device.createShaderModule({code: shaderCode});
+    const info = await shaderModule.getCompilationInfo();
+    if (info.messages.some(msg => msg.type === 'error')) {
+      return { isSupported: false, error: 'ShaderModule compilation errors: ' + JSON.stringify(info.messages) };
+    }
+
+    console.log('ShaderModule compiled successfully. WebGPU is working.');
+    return { isSupported: true, error: null };
+  } catch (err) {
+    return { isSupported: false, error: 'ShaderModule creation failed: ' + JSON.stringify(err) };
+  }
+}
+
 const STICKY_SCROLL_THRESHOLD = 120;
 const EXAMPLES = [
   "Suggest strategies to stay focused while studying.",
@@ -68,6 +109,9 @@ function App() {
   const [showModelSelectionModal, setShowModelSelectionModal] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // WebGPU compatibility
+  const [webGPUStatus, setWebGPUStatus] = useState(null); // null = checking, true = ok, string = error message
+
   // Inputs and outputs
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -90,6 +134,25 @@ function App() {
     };
 
     checkMobile();
+  }, []);
+
+  useEffect(() => {
+    const checkWebGPU = async () => {
+      try {
+        const { isSupported, error } = await isWebGPUok();
+        setWebGPUStatus({
+          isSupported,
+          error: isSupported ? null : error
+        });
+      } catch (err) {
+        setWebGPUStatus({
+          isSupported: false,
+          error: err.message || "Failed to check WebGPU compatibility"
+        });
+      }
+    };
+
+    checkWebGPU();
   }, []);
 
   function onEnter(message) {
@@ -407,7 +470,7 @@ function App() {
     );
   }
 
-  return IS_WEBGPU_AVAILABLE ? (
+  return webGPUStatus?.isSupported ? (
     <div className="flex flex-col h-screen mx-auto items justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
       {/* New Chat button and Model selector - top left */}
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
@@ -580,10 +643,22 @@ function App() {
       </p>
     </div>
   ) : (
-    <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center">
-      WebGPU is not supported
-      <br />
-      by this browser :&#40;
+    <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center px-8">
+      <div className="max-w-2xl">
+        <div className="mb-4">
+          WebGPU {webGPUStatus === null ? "Checking..." : "Not Compatible"}
+        </div>
+        {webGPUStatus?.error && (
+          <div className="text-lg font-normal text-gray-300 mb-4">
+            {webGPUStatus.error}
+          </div>
+        )}
+        <div className="text-base font-normal text-gray-400">
+          This application requires WebGPU support for AI model processing.
+          <br />
+          Please use a modern browser like Chrome, Firefox, or Edge.
+        </div>
+      </div>
     </div>
   );
 }
