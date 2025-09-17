@@ -84,6 +84,9 @@ async function generate(messages, model_id) {
     return_dict: true,
   });
 
+  // Calculate input token count for context tracking
+  const inputTokenCount = inputs.input_ids.dims[1]; // Get the sequence length
+
   let startTime;
   let numTokens = 0;
   let tps;
@@ -100,6 +103,7 @@ async function generate(messages, model_id) {
       output,
       tps,
       numTokens,
+      contextTokens: inputTokenCount + numTokens, // Total tokens used in context
     });
   };
 

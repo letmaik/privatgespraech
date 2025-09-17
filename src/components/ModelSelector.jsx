@@ -6,42 +6,48 @@ const AVAILABLE_MODELS = [
     name: 'Llama 3.2 1B',
     description: 'Meta model, 1.2 GB',
     url: 'onnx-community/Llama-3.2-1B-Instruct-q4f16',
-    hasReasoningBlocks: false
+    hasReasoningBlocks: false,
+    contextSize: 131072 // 128k tokens
   },
   {
     id: 'llama-3.2-3b',
     name: 'Llama 3.2 3B',
     description: 'Meta model, 2.4 GB',
     url: 'onnx-community/Llama-3.2-3B-Instruct-onnx-web-gqa',
-    hasReasoningBlocks: false
+    hasReasoningBlocks: false,
+    contextSize: 131072 // 128k tokens
   },
   {
     id: 'phi-3.5-mini',
     name: 'Phi-3.5 Mini 3.8B',
     description: 'Microsoft model, 2.1 GB',
     url: 'onnx-community/Phi-3.5-mini-instruct-onnx-web',
-    hasReasoningBlocks: false
+    hasReasoningBlocks: false,
+    contextSize: 131072 // 128k tokens
   },
   {
     id: 'smollm2-1.7b',
     name: 'SmolLM2 1.7B',
     description: 'HuggingFace model, 1.1 GB',
     url: 'HuggingFaceTB/SmolLM2-1.7B-Instruct',
-    hasReasoningBlocks: false
+    hasReasoningBlocks: false,
+    contextSize: 8192 // 8k tokens
   },
   {
     id: 'qwen3-0.6b',
     name: 'Qwen3 0.6B',
     description: 'Alibaba model, 0.5 GB',
     url: 'onnx-community/Qwen3-0.6B-ONNX',
-    hasReasoningBlocks: true
+    hasReasoningBlocks: true,
+    contextSize: 32768 // 32k tokens
   },
   {
     id: 'deepseek-r1-distill-qwen-1.5b',
     name: 'DeepSeek-R1-Distill-Qwen 1.5B',
     description: 'DeepSeek model, 1.3 GB',
     url: 'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',
-    hasReasoningBlocks: true
+    hasReasoningBlocks: true,
+    contextSize: 131072 // 128k tokens
   }
 ];
 

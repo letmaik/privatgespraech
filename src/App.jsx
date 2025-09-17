@@ -45,6 +45,12 @@ function setStoredModel(modelId) {
   }
 }
 
+// Get context window size for different models
+function getContextWindowSize(modelUrl) {
+  const model = AVAILABLE_MODELS.find(m => m.url === modelUrl);
+  return model?.contextSize || 8192; // Default to 8k if unknown
+}
+
 function App() {
   // Create a reference to the worker object.
   const worker = useRef(null);
@@ -68,6 +74,7 @@ function App() {
   const [queuedMessage, setQueuedMessage] = useState(null); // For storing message when model is loading
   const [tps, setTps] = useState(null);
   const [numTokens, setNumTokens] = useState(null);
+  const [contextTokens, setContextTokens] = useState(null); // Current context window usage
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -249,9 +256,10 @@ function App() {
           {
             // Generation update: update the output text.
             // Parse messages
-            const { output, tps, numTokens } = e.data;
+            const { output, tps, numTokens, contextTokens } = e.data;
             setTps(tps);
             setNumTokens(numTokens);
+            setContextTokens(contextTokens);
             setMessages((prev) => {
               const cloned = [...prev];
               const last = cloned.at(-1);
@@ -488,6 +496,17 @@ function App() {
                 }
                 {!isRunning && (
                   <span className="mr-1">&#41;.</span>
+                )}
+                {contextTokens && (
+                  <>
+                    <span className="mx-2">•</span>
+                    <span className="text-gray-500 dark:text-gray-300">
+                      Context: {contextTokens.toLocaleString()}/{getContextWindowSize(selectedModel).toLocaleString()} tokens
+                    </span>
+                    <span className="text-gray-400 dark:text-gray-500 text-xs ml-1">
+                      ({((contextTokens / getContextWindowSize(selectedModel)) * 100).toFixed(1)}%)
+                    </span>
+                  </>
                 )}
               </>
             )}
