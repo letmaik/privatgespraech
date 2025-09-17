@@ -69,6 +69,22 @@ function App() {
   const [tps, setTps] = useState(null);
   const [numTokens, setNumTokens] = useState(null);
 
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  const [isIPhone, setIsIPhone] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      const isIPhoneDevice = /iphone/i.test(userAgent.toLowerCase());
+      setIsMobile(isMobileDevice);
+      setIsIPhone(isIPhoneDevice);
+    };
+
+    checkMobile();
+  }, []);
+
   function onEnter(message) {
     // Prevent queueing multiple messages
     if (status === "loading" && queuedMessage) {
@@ -347,6 +363,41 @@ function App() {
       element.scrollTop = element.scrollHeight;
     }
   }, [messages, isRunning]);
+
+  // Show mobile warning if on mobile device
+  if (isMobile) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen px-6 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+        <div className="max-w-md text-center space-y-6">
+          <div className="text-6xl mb-4">{isIPhone ? "📱" : "🚫"}</div>
+          <h1 className="text-2xl font-bold">
+            {isIPhone ? "iPhone Not Supported" : "Device Not Supported"}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+            {isIPhone 
+              ? "This application requires a desktop browser. For AI chat on iPhone, we recommend using Enclave AI instead."
+              : "This application requires a desktop browser."
+            }
+          </p>
+          {isIPhone && (
+            <>
+              <a
+                href="https://enclaveai.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
+              >
+                Open Enclave AI
+              </a>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Enclave AI offers secure, private AI conversations on iPhone.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return IS_WEBGPU_AVAILABLE ? (
     <div className="flex flex-col h-screen mx-auto items justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
