@@ -28,26 +28,7 @@ async function isWebGPUok() {
     return { isSupported: false, error: 'WebGPU "shader-f16" feature is NOT supported on this device.' };
   }
 
-  // Minimal Compute Shader WGSL code for test
-  const shaderCode = `
-    @compute @workgroup_size(1)
-    fn main() {
-      // simple no-op compute shader
-    }
-  `;
-
-  try {
-    const shaderModule = device.createShaderModule({code: shaderCode});
-    const info = await shaderModule.getCompilationInfo();
-    if (info.messages.some(msg => msg.type === 'error')) {
-      return { isSupported: false, error: 'ShaderModule compilation errors: ' + JSON.stringify(info.messages) };
-    }
-
-    console.log('ShaderModule compiled successfully. WebGPU is working.');
-    return { isSupported: true, error: null };
-  } catch (err) {
-    return { isSupported: false, error: 'ShaderModule creation failed: ' + JSON.stringify(err) };
-  }
+  return { isSupported: true, error: null };
 }
 
 const STICKY_SCROLL_THRESHOLD = 120;
@@ -470,6 +451,11 @@ function App() {
     );
   }
 
+  // Don't show anything while WebGPU check is in progress
+  if (webGPUStatus === null) {
+    return null;
+  }
+
   return webGPUStatus?.isSupported ? (
     <div className="flex flex-col h-screen mx-auto items justify-end text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
       {/* New Chat button and Model selector - top left */}
@@ -646,7 +632,7 @@ function App() {
     <div className="fixed w-screen h-screen bg-black z-10 bg-opacity-[92%] text-white text-2xl font-semibold flex justify-center items-center text-center px-8">
       <div className="max-w-2xl">
         <div className="mb-4">
-          WebGPU {webGPUStatus === null ? "Checking..." : "Not Compatible"}
+          WebGPU Not Compatible
         </div>
         {webGPUStatus?.error && (
           <div className="text-lg font-normal text-gray-300 mb-4">
