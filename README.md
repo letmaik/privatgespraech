@@ -16,7 +16,7 @@ A privacy-focused AI chat interface that runs language models entirely in your b
 **Recommended**: Desktop and laptop computers with dedicated or integrated GPU  
 **Not Recommended**: Mobile phones or tablets (limited WebGPU support and performance)
 
-**For Mobile**: Consider [EnclaveAI](https://enclaveai.com) for privacy-focused mobile AI chat
+**For Mobile**: Consider [EnclaveAI](https://enclaveai.app/) for privacy-focused mobile AI chat
 
 ## Features
 
